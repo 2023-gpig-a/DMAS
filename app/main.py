@@ -1,34 +1,13 @@
-from datetime import datetime
 from fastapi import FastAPI, HTTPException, status
-from pydantic import BaseModel
-from Util.IdentifiedSpecies import IdentifiedSpecies
+
+from Util.Data import Image, RawEntry, ProcessedEntry, PlantIDMapEntry
+from Models.SpeciesIdentifiers.IdentifierKnotweed import IdentifierKnotweed
+
 
 app = FastAPI()
 
-
-class Image(BaseModel):
-    latitude: float
-    longitude: float
-    # image: TODO Not sure how we send this over the wire
-
-
-class RawEntry(BaseModel):
-    latitude: float
-    longitude: float
-    raw_entry: str
-    date: datetime
-
-
-class ProcessedEntry(BaseModel):
-    latitude: float
-    longitude: float
-    plant_id: str
-    date: datetime
-
-
-class PlantIDMapEntry(BaseModel):
-    species: IdentifiedSpecies
-    plant_id: str
+# Load Species Identifiers
+knotweed_identifier = IdentifierKnotweed()
 
 
 @app.get("/")
