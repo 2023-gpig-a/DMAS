@@ -7,10 +7,10 @@ This system is responsible for the following:
 * Tracking the growth of plants over time
 
 ## Running without docker
-
 ```
 python3 -m venv venv
-source venv/bin/activate
+. venv/bin/activate (linux) or ./venv/Scripts/activate (win)
+python3 -m pip install -e
 pip install -r requirements.txt
 uvicorn dmas.app.main:app --reload
 ```
