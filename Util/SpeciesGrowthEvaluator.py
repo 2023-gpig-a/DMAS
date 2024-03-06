@@ -20,6 +20,7 @@ class SpeciesGrowthEvaluator:
         1. It would be nicer if we could check for clusters of plants. e.g. centered on cell x,y there is a large cluster of 'p'.
         2. If we plan on displaying these graphs to users they should be prettier.
     """
+
     def __init__(self):
         self.maps = []
         self.species_data = {}
@@ -31,7 +32,9 @@ class SpeciesGrowthEvaluator:
                 new_map (np.ndarray): 2D string array, each cell represents a region of the forest
         """
         if len(self.maps) != 0 and new_map.size != self.maps[0].size:
-            raise ValueError(f"Invalid size of map added, other:{new_map.size} != {self.maps[0].size}")
+            raise ValueError(
+                f"Invalid size of map added, other:{new_map.size} != {self.maps[0].size}"
+            )
 
         self.maps.append(new_map)
 
@@ -63,10 +66,7 @@ class SpeciesGrowthEvaluator:
         """
         unique_species = np.unique(self.maps).tolist()
         for species in unique_species:
-
-            self.species_data[species] = {
-                "count": []
-            }
+            self.species_data[species] = {"count": []}
 
             # Count
             for i in range(len(self.maps)):
