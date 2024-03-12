@@ -1,13 +1,37 @@
-from fastapi import FastAPI, HTTPException, status
+from fastapi import FastAPI, HTTPException, status, File, UploadFile
+from pydantic import BaseModel
+from enum import Enum
+from PIL import Image
+import io
+import torch
 
-from Util.Data import Image, RawEntry, ProcessedEntry, PlantIDMapEntry
+from fastapi.staticfiles import StaticFiles
+
+from Util.Data import RawEntry, ProcessedEntry, PlantIDMapEntry
 from Models.SpeciesIdentifiers.IdentifierKnotweed import IdentifierKnotweed
+from Models.HumanDetector.HumanDetector import Classifier as HumanDetector
 
 
 app = FastAPI()
+app.mount("/ui", StaticFiles(directory="app/static", html=True), name="static")
 
-# Load Species Identifiers
+# Load Models
 knotweed_identifier = IdentifierKnotweed()
+
+human_detector = IdentifierKnotweed()
+# human_detector = HumanDetector()
+# human_detector.load_state_dict(torch.load("../Models/HumanDetector/weights/human_classification_weights.pkl"))
+# human_detector.eval()
+
+
+class StatusEnum(str, Enum):
+    success = "Success"
+    human_detected = "Human Detected"
+
+
+class MessageResponse(BaseModel):
+    status: StatusEnum
+    message: str
 
 
 @app.get("/")
@@ -15,13 +39,32 @@ async def hello_world():
     return {"response": "Hello World"}
 
 
-@app.post("/upload_images")
-async def upload_images(image: Image):
-    raise HTTPException(
-        status_code=status.HTTP_501_NOT_IMPLEMENTED
-    )
+@app.post("/upload_image")
+async def upload_image(file: UploadFile = File(...)):
 
-    # If the image contains a human exit
+    try:
+        im = Image.open(file.file)
+        if im.mode in ("RGBA", "P"):
+            im = im.convert("RGB")
+        buf = io.BytesIO()
+        im.save(buf, 'JPEG', quality=50)
+        # to get the entire bytes of the buffer use:
+        contents = buf.getvalue()
+        # or, to read from `buf` (which is a file-like object), call this first:
+        buf.seek(0)  # to rewind the cursor to the start of the buffer
+    except Exception:
+        raise HTTPException(status_code=500, detail='Something went wrong')
+    finally:
+        file.file.close()
+        buf.close()
+
+    output = human_detector.evaluate(im)
+    if output == 1:
+        # If human found, exit
+        return MessageResponse(status=StatusEnum.human_detected, message="")
+
+    return MessageResponse(status=StatusEnum.success, message="Human Not Detected")
+
     # First upload image to s3 storage, this returns uri
     # Create raw entry and upload to postgresql
     # Process the raw entry and upload the processed entry to postgresql

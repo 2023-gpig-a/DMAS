@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Human Detection Test</title>
+</head>
+<script>
+
+    async function upload_image(){
+
+        const file = document.getElementById("fileInput").files[0];
+        const formData = new FormData();
+        formData.append('file', file);
+
+        let response = await fetch("/upload_image", {method: 'POST', body: formData})
+        let response_json = await response.json()
+
+        let out = ""
+        if (response_json["status"] === "Success") {
+            out = "No Humans Detected"
+        } else {
+            out = "Humans Detected"
+        }
+        document.getElementById("response").innerHTML = out
+
+  }
+</script>
+<body>
+    <main>
+        <h1>Does this image contain humans</h1>
+        <p>Please only upload images</p>
+        <form>
+            <input type="file" id="fileInput" name="file"/>
+            <button type="button" id="submit" onclick="upload_image()">Upload</button>
+        </form>
+        <p id="response"></p>
+    </main>
+</body>
+</html>

@@ -12,7 +12,7 @@ python3 -m venv venv
 . venv/bin/activate (linux) or ./venv/Scripts/activate (win)
 python3 -m pip install -e
 pip install -r requirements.txt
-uvicorn dmas.app.main:app --reload
+uvicorn app.main:app --reload
 ```
 
 ## Running with docker
@@ -23,7 +23,7 @@ docker run -d --name dmas -p 8080:8080 dmas_image
 
 ## Endpoints:
 
-`/upload_images`
+`/upload_image`
 When a get request is made to this endpoint, the DMAS will scan our file system for any new images, if they are found it will create a new postgres entry for each image, storing the longitude, latitude, file location, and a timestamp of the image.
 We will extract this data from the image metadata. 
 The image will be deleted if we believe the image contains a human.
