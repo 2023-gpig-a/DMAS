@@ -195,10 +195,17 @@ def display_training_graphs(src_location: str):
 if __name__ == "__main__":
     # Run this to train the model and save the weights
     model = Classifier(batch_size=6)
+
+    device = "cpu"
+    if torch.backends.mps.is_available():
+        device = "mps"
+    if torch.cuda.is_available():
+        device = "cuda"
+
     train(
         model,
         20,
-        "mps",
+        device,
         "weights/human_classification_results.pkl",
         "weights/human_classification_weights.pkl"
     )

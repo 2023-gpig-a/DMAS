@@ -28,7 +28,7 @@ if torch.cuda.is_available():
 knotweed_identifier = IdentifierKnotweed()
 
 human_detector = HumanDetector()
-human_detector.load_state_dict(torch.load("Models/HumanDetector/weights/human_classification_weights.pkl"))
+human_detector.load_state_dict(torch.load("Models/HumanDetection/weights/human_classification_weights.pkl"))
 human_detector.eval()
 human_detector = human_detector.to(device)
 
@@ -75,7 +75,6 @@ async def upload_image(file: UploadFile = File(...)):
     img_normalised = img_normalised.to(device)
     output = human_detector(img_normalised)
     output = torch.argmax(output.detach().cpu())
-    print(output.item())
     if output == 1:
         # If found, exit
         return MessageResponse(status=StatusEnum.human_detected, message="Human Detected")

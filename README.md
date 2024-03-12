@@ -6,6 +6,7 @@ This system is responsible for the following:
 * Matching similar plants and assigning a `plant_id` to them
 * Tracking the growth of plants over time
 
+[//]: # (TODO update this to include building the models)
 ## Running without docker
 ```
 python3 -m venv venv
