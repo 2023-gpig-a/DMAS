@@ -11,7 +11,7 @@ from torch.utils.data import DataLoader
 from Util import FileHandler
 from Util.Data import RawEntry, ProcessedEntry, PlantIDMapEntry
 from Models.SpeciesIdentifiers.IdentifierKnotweed import IdentifierKnotweed
-from Models.HumanDetector.HumanDetector import Classifier as HumanDetector
+from Models.HumanDetection.HumanDetector import Classifier as HumanDetector
 
 
 app = FastAPI()
@@ -80,7 +80,7 @@ async def upload_image(file: UploadFile = File(...)):
         # If found, exit
         return MessageResponse(status=StatusEnum.human_detected, message="Human Detected")
 
-    # Upload image to s3 storage, this returns uri
+    # Upload image to storage, this returns uri
     loc = FileHandler.save(im, file.filename)
 
     return MessageResponse(status=StatusEnum.success, message=f"Human not detected, image saved successfully at {loc}")
@@ -95,6 +95,8 @@ async def process_raw_images(raw_entry: RawEntry):
     raise HTTPException(
         status_code=status.HTTP_501_NOT_IMPLEMENTED
     )
+
+    # https://www.mdpi.com/2073-4395/10/11/1721
 
     # Find all plants within the image
     # Cluster and identify these
