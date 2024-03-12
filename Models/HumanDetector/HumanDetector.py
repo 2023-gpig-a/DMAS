@@ -17,31 +17,18 @@ Acquired on Wednesday 29th November
 class Classifier(nn.Module):
 
     # Create the train and val dataloaders and the model
-    def __init__(self, dataset_src: str = "Datasets/human detection dataset", batch_size: int = 32, loss_func=None):
-        # TODO this should all be split into the training and loading
-        #   We dont need to load the dataset unless we are training
+    def __init__(self, batch_size: int = 32):
         super(Classifier, self).__init__()
-
-        self.loss_func = nn.CrossEntropyLoss() if loss_func is None else loss_func
 
         # Create dataloaders
         self.batch_size = batch_size
         self.classes = ["No People", "Yes People"]
-        tensor_transform = transforms.Compose([
+        self.tensor_transform = transforms.Compose([
             transforms.PILToTensor(),
             transforms.Resize((128, 128), antialias=True),
             transforms.Lambda(lambda y: y.float() / 255),
             transforms.Normalize(0.5, 0.5),
         ])
-        people_dataset = datasets.ImageFolder(root=dataset_src, transform=tensor_transform)
-
-        train_size = int(0.8 * len(people_dataset))
-        test_size = len(people_dataset) - train_size
-        self.train_dataset, self.validation_dataset = random_split(people_dataset,
-                                                                   [train_size, test_size])
-
-        self.train_loader = DataLoader(dataset=self.train_dataset, batch_size=self.batch_size, shuffle=True)
-        self.validation_loader = DataLoader(dataset=self.validation_dataset, batch_size=self.batch_size, shuffle=True)
 
         # Define Model
         self.conv_layers = nn.Sequential(
@@ -92,16 +79,21 @@ class Classifier(nn.Module):
         return x  # Output has dimensions B x 2
 
 
-def train_model(
-        model: nn.Module,
-        epochs: int = 0,
-        device: str = "cpu",
-        results_out: str = None,
-        weights_out: str = None):
+def train(model: nn.Module, epochs: int = 0, device: str = "cpu", results_out: str = None, weights_out: str = None):
+
     # Set up our training environment
     model = model.to(device)
     optim = torch.optim.Adam(model.parameters())
-    iterations_per_epoch = len(model.train_loader)
+
+    dataset_src = "Datasets/human detection dataset"
+    people_dataset = datasets.ImageFolder(root=dataset_src, transform=model.tensor_transform)
+    train_size = int(0.8 * len(people_dataset))
+    test_size = len(people_dataset) - train_size
+    train_dataset, validation_dataset = random_split(people_dataset,[train_size, test_size])
+    train_loader = DataLoader(dataset=train_dataset, batch_size=model.batch_size, shuffle=True)
+    validation_loader = DataLoader(dataset=validation_dataset, batch_size=model.batch_size, shuffle=True)
+
+    loss_func = nn.CrossEntropyLoss()
 
     # These variables will store the data for analysis
     training_losses = []
@@ -109,6 +101,7 @@ def train_model(
     validation_losses = []
     validation_accuracies = []
 
+    # Training
     for epoch in range(epochs):
 
         # Train the model and evaluate on the training set
@@ -117,11 +110,11 @@ def train_model(
         total = 0
         total_loss = 0
 
-        for i, (inputs, labels) in enumerate(model.train_loader):
+        for i, (inputs, labels) in enumerate(train_loader):
 
             inputs, labels = inputs.to(device), labels.to(device)
             output = model(inputs)
-            loss = model.loss_func(output, labels)
+            loss = loss_func(output, labels)
             optim.zero_grad()
             loss.backward()
             optim.step()
@@ -131,7 +124,7 @@ def train_model(
             total += float(labels.size(0))
             total_loss += loss * inputs.shape[0]
 
-        total_loss /= len(model.train_dataset)
+        total_loss /= len(train_dataset)
         training_losses.append(total_loss.item())
         training_accuracies.append((correct / total).item())
         train_accuracy = (correct / total).item()
@@ -143,16 +136,16 @@ def train_model(
         model.eval()
 
         with torch.no_grad():
-            for inputs, labels in model.validation_loader:
+            for inputs, labels in validation_loader:
                 inputs, labels = inputs.to(device), labels.to(device)
                 output = model(inputs)
-                loss = model.loss_func(output, labels)
+                loss = loss_func(output, labels)
                 y_pred = torch.argmax(output, 1)
                 correct += (y_pred == labels).sum()
                 total += float(labels.size(0))
                 total_loss += loss * inputs.shape[0]
             validation_accuracy = (correct / total).item()
-        total_loss /= len(model.validation_dataset)
+        total_loss /= len(validation_dataset)
 
         # Switch back to train mode and save counters
         model.train()
@@ -202,7 +195,7 @@ def display_training_graphs(src_location: str):
 if __name__ == "__main__":
     # Run this to train the model and save the weights
     model = Classifier(batch_size=6)
-    train_model(
+    train(
         model,
         20,
         "mps",

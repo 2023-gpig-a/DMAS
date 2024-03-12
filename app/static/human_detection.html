@@ -17,13 +17,7 @@
         let response = await fetch("/upload_image", {method: 'POST', body: formData})
         let response_json = await response.json()
 
-        let out = ""
-        if (response_json["status"] === "Success") {
-            out = "No Humans Detected"
-        } else {
-            out = "Humans Detected"
-        }
-        document.getElementById("response").innerHTML = out
+        document.getElementById("response").innerHTML = response_json["message"]
 
   }
 </script>

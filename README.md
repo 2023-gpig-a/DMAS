@@ -24,7 +24,7 @@ docker run -d --name dmas -p 8080:8080 dmas_image
 ## Endpoints:
 
 `/upload_image`
-When a get request is made to this endpoint, the DMAS will scan our file system for any new images, if they are found it will create a new postgres entry for each image, storing the longitude, latitude, file location, and a timestamp of the image.
+Post images to this endpoint, if they do not contain images it will create a new PostgreSQL entry for each image, storing the longitude, latitude, file location, and a timestamp of the image.
 We will extract this data from the image metadata. 
 The image will be deleted if we believe the image contains a human.
 We then process these images to identify plants contained and try to cluster them.

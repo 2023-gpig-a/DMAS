@@ -6,7 +6,9 @@ import io
 import torch
 
 from fastapi.staticfiles import StaticFiles
+from torch.utils.data import DataLoader
 
+from Util import FileHandler
 from Util.Data import RawEntry, ProcessedEntry, PlantIDMapEntry
 from Models.SpeciesIdentifiers.IdentifierKnotweed import IdentifierKnotweed
 from Models.HumanDetector.HumanDetector import Classifier as HumanDetector
@@ -15,13 +17,20 @@ from Models.HumanDetector.HumanDetector import Classifier as HumanDetector
 app = FastAPI()
 app.mount("/ui", StaticFiles(directory="app/static", html=True), name="static")
 
+# Get device
+device = "cpu"
+if torch.backends.mps.is_available():
+    device = "mps"
+if torch.cuda.is_available():
+    device = "cuda"
+
 # Load Models
 knotweed_identifier = IdentifierKnotweed()
 
-human_detector = IdentifierKnotweed()
-# human_detector = HumanDetector()
-# human_detector.load_state_dict(torch.load("../Models/HumanDetector/weights/human_classification_weights.pkl"))
-# human_detector.eval()
+human_detector = HumanDetector()
+human_detector.load_state_dict(torch.load("Models/HumanDetector/weights/human_classification_weights.pkl"))
+human_detector.eval()
+human_detector = human_detector.to(device)
 
 
 class StatusEnum(str, Enum):
@@ -42,6 +51,8 @@ async def hello_world():
 @app.post("/upload_image")
 async def upload_image(file: UploadFile = File(...)):
 
+    # This try catch clause is shamelessly stolen from:
+    # https://stackoverflow.com/questions/73810377/how-to-save-an-uploaded-image-to-fastapi-using-python-imaging-library-pil
     try:
         im = Image.open(file.file)
         if im.mode in ("RGBA", "P"):
@@ -58,14 +69,22 @@ async def upload_image(file: UploadFile = File(...)):
         file.file.close()
         buf.close()
 
-    output = human_detector.evaluate(im)
+    # Check for humans
+    img_normalised = human_detector.tensor_transform(im)
+    img_normalised = img_normalised.unsqueeze_(0)
+    img_normalised = img_normalised.to(device)
+    output = human_detector(img_normalised)
+    output = torch.argmax(output.detach().cpu())
+    print(output.item())
     if output == 1:
-        # If human found, exit
-        return MessageResponse(status=StatusEnum.human_detected, message="")
+        # If found, exit
+        return MessageResponse(status=StatusEnum.human_detected, message="Human Detected")
 
-    return MessageResponse(status=StatusEnum.success, message="Human Not Detected")
+    # Upload image to s3 storage, this returns uri
+    loc = FileHandler.save(im, file.filename)
 
-    # First upload image to s3 storage, this returns uri
+    return MessageResponse(status=StatusEnum.success, message=f"Human not detected, image saved successfully at {loc}")
+
     # Create raw entry and upload to postgresql
     # Process the raw entry and upload the processed entry to postgresql
     # If we have created a new plant id then run it against our plant id mapper
