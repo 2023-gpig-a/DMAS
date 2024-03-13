@@ -1,6 +1,4 @@
 from fastapi import FastAPI, HTTPException, status, File, UploadFile
-from pydantic import BaseModel
-from enum import Enum
 from PIL import Image
 import io
 import torch
@@ -12,6 +10,7 @@ from Util import FileHandler
 from Util.Data import RawEntry, ProcessedEntry, PlantIDMapEntry
 from Models.SpeciesIdentifiers.IdentifierKnotweed import IdentifierKnotweed
 from Models.HumanDetection.HumanDetector import Classifier as HumanDetector
+from app.Messages import MessageResponse
 
 
 app = FastAPI()
@@ -31,16 +30,6 @@ human_detector = HumanDetector()
 human_detector.load_state_dict(torch.load("Models/HumanDetection/weights/human_classification_weights.pkl"))
 human_detector.eval()
 human_detector = human_detector.to(device)
-
-
-class StatusEnum(str, Enum):
-    success = "Success"
-    human_detected = "Human Detected"
-
-
-class MessageResponse(BaseModel):
-    status: StatusEnum
-    message: str
 
 
 @app.get("/")
