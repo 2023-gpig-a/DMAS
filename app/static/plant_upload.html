@@ -22,7 +22,13 @@
         let response = await fetch("/upload_image", {method: 'POST', body: formData})
         let response_json = await response.json()
 
-        document.getElementById("response").innerHTML = response_json["message"]
+        document.getElementById("response").innerHTML = ""
+
+        response_json["message"].forEach((msg) => {
+            message_elem = document.createElement("p")
+            message_elem.innerHTML = msg
+            document.getElementById("response").append(message_elem)
+        })
   }
 
 </script>
@@ -39,6 +45,15 @@
         font-style: normal;
     }
 
+    #response{
+        margin-top:3em;
+    }
+
+    #response > p{
+        width:100%;
+        text-align: center;
+    }
+
 </style>
 <body>
     <main>
@@ -47,7 +62,7 @@
             <input type="file" id="fileInput" name="file"/>
             <button type="button" id="submit" onclick="upload_image()">Upload</button>
         </form>
-        <p id="response"></p>
+        <div id="response"></div>
     </main>
 </body>
 </html>

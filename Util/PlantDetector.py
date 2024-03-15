@@ -4,7 +4,7 @@ from pprint import pprint
 
 
 def detect(image_path: str):
-    with open("../plantnet_API_key", "r") as file:
+    with open("plantnet_API_key", "r") as file:
         API_KEY = file.readline()
 
     PROJECT = "all"  # try "weurope" or "canada"

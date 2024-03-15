@@ -4,13 +4,16 @@ import io
 import torch
 
 from fastapi.staticfiles import StaticFiles
-from torch.utils.data import DataLoader
 
 from Util import FileHandler
 from Util.Data import RawEntry, ProcessedEntry, PlantIDMapEntry
 from Models.SpeciesIdentifiers.IdentifierKnotweed import IdentifierKnotweed
 from Models.HumanDetection.HumanDetector import Classifier as HumanDetector
-from app.Messages import MessageResponse
+from Util.PlantDetector import detect
+from app.Messages import StatusEnum, MessageResponse, PlantGrowthDataResponse
+
+# OPTIONS
+CHECK_HUMANS = False  # Verify if humans are in the image
 
 
 app = FastAPI()
@@ -64,18 +67,31 @@ async def upload_image(file: UploadFile = File(...)):
     img_normalised = img_normalised.to(device)
     output = human_detector(img_normalised)
     output = torch.argmax(output.detach().cpu())
-    if output == 1:
+    if output == 1 and CHECK_HUMANS:
         # If found, exit
-        return MessageResponse(status=StatusEnum.human_detected, message="Human Detected")
+        return MessageResponse(status=StatusEnum.human_detected, message=["Human Detected"])
 
-    # Upload image to storage, this returns uri
+    # TODO Upload image to storage, this returns uri
     loc = FileHandler.save(im, file.filename)
 
-    return MessageResponse(status=StatusEnum.success, message=f"Human not detected, image saved successfully at {loc}")
+    # TODO Create raw entry and upload to postgresql
 
-    # Create raw entry and upload to postgresql
-    # Process the raw entry and upload the processed entry to postgresql
-    # If we have created a new plant id then run it against our plant id mapper
+    # Process the raw entry
+
+    plant_data = detect(loc)
+    plant_class = plant_data[0]['species']['commonNames'][0]
+
+    return MessageResponse(
+        status=StatusEnum.success,
+        message=[
+            f"Human not detected,",
+            f"Image saved successfully at {loc}",
+            f"Plant most likely: {plant_class}"
+        ])
+
+    # TODO Upload processed entry to postgresql
+
+    # TODO If we have created a new plant id then run it against our plant id mapper
     #   If we have found a mapping, create PlantIDMapEntry and upload to postgresql
 
 

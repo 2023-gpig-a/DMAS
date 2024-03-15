@@ -11,7 +11,7 @@ class StatusEnum(str, Enum):
 
 class MessageResponse(BaseModel):
     status: StatusEnum
-    message: str
+    message: List[str]
 
 
 class PlantGrowthDataResponse(BaseModel):
