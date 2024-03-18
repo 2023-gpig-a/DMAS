@@ -6,7 +6,7 @@ import torch
 from fastapi.staticfiles import StaticFiles
 
 from Util import FileHandler
-from Util.Data import RawEntry, ProcessedEntry, PlantIDMapEntry
+from Util.Data import RawEntry, ProcessedEntry, PlantIDMapEntry, load_config, connect
 from Models.HumanDetection.HumanDetector import Classifier as HumanDetector
 from Util.PlantDetector import detect
 from app.Messages import StatusEnum, MessageResponse, PlantGrowthDataResponse
@@ -17,6 +17,11 @@ CHECK_HUMANS = False  # Verify if humans are in the image
 
 app = FastAPI()
 app.mount("/ui", StaticFiles(directory="app/static", html=True), name="static")
+
+config = load_config()
+conn = connect(config)
+cursor = conn.cursor()
+
 
 # Get device
 device = "cpu"
