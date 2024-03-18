@@ -7,7 +7,6 @@ from fastapi.staticfiles import StaticFiles
 
 from Util import FileHandler
 from Util.Data import RawEntry, ProcessedEntry, PlantIDMapEntry
-from Models.SpeciesIdentifiers.IdentifierKnotweed import IdentifierKnotweed
 from Models.HumanDetection.HumanDetector import Classifier as HumanDetector
 from Util.PlantDetector import detect
 from app.Messages import StatusEnum, MessageResponse, PlantGrowthDataResponse
@@ -27,11 +26,7 @@ if torch.cuda.is_available():
     device = "cuda"
 
 # Load Models
-knotweed_identifier = IdentifierKnotweed()
-
-human_detector = HumanDetector()
-human_detector.load_state_dict(torch.load("Models/HumanDetection/weights/human_classification_weights.pkl"))
-human_detector.eval()
+human_detector = HumanDetector(pretrained=True)
 human_detector = human_detector.to(device)
 
 
@@ -90,9 +85,6 @@ async def upload_image(file: UploadFile = File(...)):
         ])
 
     # TODO Upload processed entry to postgresql
-
-    # TODO If we have created a new plant id then run it against our plant id mapper
-    #   If we have found a mapping, create PlantIDMapEntry and upload to postgresql
 
 
 async def process_raw_images(raw_entry: RawEntry):

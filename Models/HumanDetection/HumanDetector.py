@@ -17,7 +17,7 @@ Acquired on Wednesday 29th November
 class Classifier(nn.Module):
 
     # Create the train and val dataloaders and the model
-    def __init__(self, batch_size: int = 32):
+    def __init__(self, batch_size: int = 32, pretrained: bool = True):
         super(Classifier, self).__init__()
 
         # Create dataloaders
@@ -71,12 +71,23 @@ class Classifier(nn.Module):
                             sum(p.numel() for p in self.MLP.parameters() if p.requires_grad))
         print(f"Created classifier with {total_parameters} trainable parameters")
 
+        if pretrained:
+            self.load()
+
     def forward(self, x):
         # Input x has dimensions B x 3 x 128 x 128, B is batch size
         x = self.conv_layers(x)
         x = x.view(x.size(0), -1)
         x = self.MLP(x)
         return x  # Output has dimensions B x 2
+
+    def load(self, state_dict_loc: str = None) -> None:
+        if state_dict_loc is None:
+            state_dict_loc = "Models/HumanDetection/weights/human_classification_weights.pkl"
+        self.load_state_dict(torch.load(state_dict_loc))
+        self.eval()
+
+
 
 
 def train(model: nn.Module, epochs: int = 0, device: str = "cpu", results_out: str = None, weights_out: str = None):
