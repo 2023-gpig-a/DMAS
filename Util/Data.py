@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import List
 from pydantic import BaseModel
 from enum import Enum
 from configparser import ConfigParser
@@ -11,29 +12,16 @@ class IdentifiedSpecies(Enum):
     JapaneseKnotweed = 1
 
 
-class Image(BaseModel):
-    latitude: float
-    longitude: float
-    # image: TODO Not sure how we send this over the wire
-
-
 # Database entries start
 class RawEntry(BaseModel):
-    latitude: float
-    longitude: float
+    latitude: List[float]
+    longitude: List[float]
     image_uri: str
     date: datetime
 
 
 class ProcessedEntry(BaseModel):
-    latitude: float
-    longitude: float
-    plant_id: str
-    date: datetime
-
-
-class PlantIDMapEntry(BaseModel):
-    species: IdentifiedSpecies
+    image_uri: str
     plant_id: str
 # Database entries end
 
@@ -66,8 +54,14 @@ def connect(config):
 
 
 def insert_raw_entry(cursor, entry: RawEntry) -> None:
-    print(entry)
-    cursor.execute(f"""
+    cursor.execute(f""" 
         INSERT INTO image_processing.raw_entry (image_uri, latitude, longitude, date) 
         VALUES ({entry.image_uri}, {entry.latitude} , {entry.longitude}, {entry.date}); 
+    """)
+
+
+def insert_processed_entry(cursor, entry: ProcessedEntry) -> None:
+    cursor.execute(f"""
+        INSERT INTO image_processing.processed_entry (image_uri, plant_id) 
+        VALUES ({entry.image_uri},{entry.plant_id}); 
     """)

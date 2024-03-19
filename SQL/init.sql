@@ -35,8 +35,8 @@ ALTER TABLE IF EXISTS image_processing.processed_entry
 CREATE TABLE IF NOT EXISTS image_processing.raw_entry
 (
     image_uri text COLLATE pg_catalog."default" NOT NULL,
-    latitude double precision NOT NULL,
-    longitude double precision NOT NULL,
+    latitude double precision[] NOT NULL,
+    longitude double precision[] NOT NULL,
     date date NOT NULL,
     CONSTRAINT raw_entry_pkey PRIMARY KEY (image_uri)
 )

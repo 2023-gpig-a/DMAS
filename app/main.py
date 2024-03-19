@@ -1,29 +1,29 @@
+from datetime import datetime
 from fastapi import FastAPI, HTTPException, status, File, UploadFile
 from PIL import Image
 import io
 import torch
 
 from fastapi.staticfiles import StaticFiles
-
 from Util import FileHandler
-from Util.Data import RawEntry, ProcessedEntry, PlantIDMapEntry, load_config, connect
+from Util.Data import RawEntry, ProcessedEntry, load_config, connect, insert_raw_entry, insert_processed_entry
 from Models.HumanDetection.HumanDetector import Classifier as HumanDetector
 from Util.PlantDetector import detect
 from app.Messages import StatusEnum, MessageResponse, PlantGrowthDataResponse
 
-# OPTIONS
+# START OPTIONS
 CHECK_HUMANS = False  # Verify if humans are in the image
 
-
+# Set up app
 app = FastAPI()
 app.mount("/ui", StaticFiles(directory="app/static", html=True), name="static")
 
+# Set up PostgreSQL
 config = load_config()
 conn = connect(config)
 cursor = conn.cursor()
 
-
-# Get device
+# Get device for ML
 device = "cpu"
 if torch.backends.mps.is_available():
     device = "mps"
@@ -61,7 +61,7 @@ async def upload_image(file: UploadFile = File(...)):
         file.file.close()
         buf.close()
 
-    # Check for humans
+    # Check For Humans
     img_normalised = human_detector.tensor_transform(im)
     img_normalised = img_normalised.unsqueeze_(0)
     img_normalised = img_normalised.to(device)
@@ -71,15 +71,27 @@ async def upload_image(file: UploadFile = File(...)):
         # If found, exit
         return MessageResponse(status=StatusEnum.human_detected, message=["Human Detected"])
 
-    # TODO Upload image to storage, this returns uri
+    # TODO Use actual S3 Storage
+    # Create Raw Entry
     loc = FileHandler.save(im, file.filename)
+    gps_info = FileHandler.gps_details(im)
+    raw_entry = RawEntry(
+        latitude=list(gps_info["GPSLatitude"]),
+        longitude=list(gps_info["GPSLongitude"]),
+        image_uri=loc,
+        date=datetime.now()
+    )
+    insert_raw_entry(raw_entry)
 
-    # TODO Create raw entry and upload to postgresql
-
-    # Process the raw entry
-
+    # Processed Entry
     plant_data = detect(loc)
     plant_class = plant_data[0]['species']['commonNames'][0]
+
+    processed_entry = ProcessedEntry(
+        image_uri=loc,
+        plant_id=plant_class
+    )
+    insert_processed_entry(processed_entry)
 
     return MessageResponse(
         status=StatusEnum.success,
@@ -88,20 +100,6 @@ async def upload_image(file: UploadFile = File(...)):
             f"Image saved successfully at {loc}",
             f"Plant most likely: {plant_class}"
         ])
-
-    # TODO Upload processed entry to postgresql
-
-
-async def process_raw_images(raw_entry: RawEntry):
-    raise HTTPException(
-        status_code=status.HTTP_501_NOT_IMPLEMENTED
-    )
-
-    # https://www.mdpi.com/2073-4395/10/11/1721
-
-    # Find all plants within the image
-    # Cluster and identify these
-    # Return processed entry
 
 
 @app.get("/track_growth")
