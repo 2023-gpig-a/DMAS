@@ -7,6 +7,7 @@ from pydantic import BaseModel
 class StatusEnum(str, Enum):
     success = "Success"
     human_detected = "Human Detected"
+    plant_not_detected = "Plant Not Detected"
 
 
 class MessageResponse(BaseModel):

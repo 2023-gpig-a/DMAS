@@ -53,15 +53,20 @@ def connect(config):
         print(error)
 
 
-def insert_raw_entry(cursor, entry: RawEntry) -> None:
-    cursor.execute(f""" 
-        INSERT INTO image_processing.raw_entry (image_uri, latitude, longitude, date) 
-        VALUES ({entry.image_uri}, {entry.latitude} , {entry.longitude}, {entry.date}); 
-    """)
+def insert_raw_entry(conn, entry: RawEntry) -> None:
+    with conn.cursor() as cursor:
+        cursor.execute(
+            """ 
+            INSERT INTO image_processing.raw_entry (image_uri, latitude, longitude, date) 
+            VALUES (%s, %s, %s, %s); 
+            """, (entry.image_uri,entry.latitude,entry.longitude,entry.date,))
+    conn.commit()
 
 
-def insert_processed_entry(cursor, entry: ProcessedEntry) -> None:
-    cursor.execute(f"""
-        INSERT INTO image_processing.processed_entry (image_uri, plant_id) 
-        VALUES ({entry.image_uri},{entry.plant_id}); 
-    """)
+def insert_processed_entry(conn, entry: ProcessedEntry) -> None:
+    with conn.cursor() as cursor:
+        cursor.execute("""
+            INSERT INTO image_processing.processed_entry (image_uri, plant_id) 
+            VALUES (%s, %s); 
+        """, (entry.image_uri, entry.plant_id))
+    conn.commit()

@@ -1,27 +1,29 @@
 import os
+import uuid
+
 from PIL import Image
 from PIL.ExifTags import GPSTAGS, TAGS
 
 
 def save(image: Image, filename: str) -> str:
-    # Currently in place until we have a proper s3 mock in place
+    # TODO replace with S3
     if not os.path.exists('Data/'):
         os.makedirs('Data')
 
-    image.save(f"Data/{filename}")
+    _, ext = filename.split(".")
+    filename = uuid.uuid4().hex
+    image.save(f'Data/{filename}.{ext}')
+    return f'Data/{filename}.{ext}'
 
-    return f"Data/{filename}"
 
-
-def gps_details(image_file_path) -> {}:
+def gps_details(image: Image) -> {}:
     exif_table = {}
-    image = Image.open(image_file_path)
     info = image.getexif()
     for tag, value in info.items():
         decoded = TAGS.get(tag, tag)
         exif_table[decoded] = value
 
-    if len(exif_table['GPSInfo'].keys()) == 0:
+    if 'GPSInfo' not in exif_table.keys():
         return {
             'GPSLatitudeRef': 'N',
             'GPSLatitude': (0, 0, 0),

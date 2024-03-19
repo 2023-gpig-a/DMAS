@@ -1,0 +1,2 @@
+class PlantsUndetectedError(Exception):
+    pass

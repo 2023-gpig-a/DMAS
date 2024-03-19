@@ -5,6 +5,8 @@ import io
 import torch
 
 from fastapi.staticfiles import StaticFiles
+
+from Exceptions.PlantsUndetectedError import PlantsUndetectedError
 from Util import FileHandler
 from Util.Data import RawEntry, ProcessedEntry, load_config, connect, insert_raw_entry, insert_processed_entry
 from Models.HumanDetection.HumanDetector import Classifier as HumanDetector
@@ -21,7 +23,6 @@ app.mount("/ui", StaticFiles(directory="app/static", html=True), name="static")
 # Set up PostgreSQL
 config = load_config()
 conn = connect(config)
-cursor = conn.cursor()
 
 # Get device for ML
 device = "cpu"
@@ -71,7 +72,6 @@ async def upload_image(file: UploadFile = File(...)):
         # If found, exit
         return MessageResponse(status=StatusEnum.human_detected, message=["Human Detected"])
 
-    # TODO Use actual S3 Storage
     # Create Raw Entry
     loc = FileHandler.save(im, file.filename)
     gps_info = FileHandler.gps_details(im)
@@ -81,17 +81,23 @@ async def upload_image(file: UploadFile = File(...)):
         image_uri=loc,
         date=datetime.now()
     )
-    insert_raw_entry(raw_entry)
 
     # Processed Entry
-    plant_data = detect(loc)
-    plant_class = plant_data[0]['species']['commonNames'][0]
+    try:
+        plant_data = detect(loc)
+        plant_class = plant_data[0]['species']['commonNames'][0]
+    except PlantsUndetectedError as _:
+        return MessageResponse(status=StatusEnum.plant_not_detected, message=["No plants detected in image"])
 
+    # TODO store the results that pass a threshold instead of the top one
     processed_entry = ProcessedEntry(
         image_uri=loc,
         plant_id=plant_class
     )
-    insert_processed_entry(processed_entry)
+
+    # Insert Entries
+    insert_raw_entry(conn, raw_entry)
+    insert_processed_entry(conn, processed_entry)
 
     return MessageResponse(
         status=StatusEnum.success,

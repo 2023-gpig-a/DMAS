@@ -2,6 +2,8 @@ import requests
 import json
 from pprint import pprint
 
+from Exceptions.PlantsUndetectedError import PlantsUndetectedError
+
 
 def detect(image_path: str):
     with open("plantnet_API_key", "r") as file:
@@ -22,6 +24,9 @@ def detect(image_path: str):
     s = requests.Session()
     response = s.send(prepared)
     json_result = json.loads(response.text)
+    if 'statusCode' in json_result.keys() and json_result['statusCode'] == 404:
+        raise PlantsUndetectedError("Plant not recognised")
+
     return json_result["results"]
 
 
