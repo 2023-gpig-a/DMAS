@@ -205,7 +205,7 @@ def display_training_graphs(src_location: str):
 
 if __name__ == "__main__":
     # Run this to train the model and save the weights
-    model = Classifier(batch_size=6)
+    model = Classifier(batch_size=6, pretrained=False)
 
     device = "cpu"
     if torch.backends.mps.is_available():
