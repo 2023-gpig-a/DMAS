@@ -1,15 +1,8 @@
 from datetime import datetime
 from typing import List
 from pydantic import BaseModel
-from enum import Enum
 from configparser import ConfigParser
 import psycopg2
-
-
-# Each species listed here requires a model that can detect them from a series of images
-class IdentifiedSpecies(Enum):
-    Unidentified = 0
-    JapaneseKnotweed = 1
 
 
 # Database entries start
