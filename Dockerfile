@@ -1,5 +1,9 @@
 FROM python:3.9
 
+RUN apt-get update \
+    && apt-get -y install libpq-dev gcc \
+    && pip install psycopg2
+
 # install requirements before adding app
 COPY ./requirements.txt /tmp
 RUN pip install --no-cache-dir --upgrade -r /tmp/requirements.txt
