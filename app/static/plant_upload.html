@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap" rel="stylesheet">
+
+    <title>Upload Image</title>
+</head>
+<script>
+
+    async function upload_image(){
+
+        const file = document.getElementById("fileInput").files[0];
+        const formData = new FormData();
+        formData.append('file', file);
+
+        let response = await fetch("/upload_image", {method: 'POST', body: formData})
+        let response_json = await response.json()
+
+        document.getElementById("response").innerHTML = ""
+
+        response_json["message"].forEach((msg) => {
+            message_elem = document.createElement("p")
+            message_elem.innerHTML = msg
+            document.getElementById("response").append(message_elem)
+        })
+  }
+
+</script>
+<style>
+    main{
+        display:flex;
+        flex-direction:column;
+        align-items:center;
+        justify-content:center;
+        height:90vh;
+
+        font-family: "Roboto", sans-serif;
+        font-weight: 400;
+        font-style: normal;
+    }
+
+    #response{
+        margin-top:3em;
+    }
+
+    #response > p{
+        width:100%;
+        text-align: center;
+    }
+
+</style>
+<body>
+    <main>
+        <h1>Submit images to process</h1>
+        <form>
+            <input type="file" id="fileInput" name="file"/>
+            <button type="button" id="submit" onclick="upload_image()">Upload</button>
+        </form>
+        <div id="response"></div>
+    </main>
+</body>
+</html>
