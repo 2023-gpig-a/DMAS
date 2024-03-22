@@ -1,6 +1,6 @@
 FROM python:3.9
 
-RUN apt-get update \
+RUN DEBIAN_FRONTEND=noninteractive apt-get update \
     && apt-get -y install libpq-dev gcc \
     && pip install psycopg2
 
