@@ -16,11 +16,9 @@ CREATE TABLE IF NOT EXISTS image_processing.processed_entry
         REFERENCES image_processing.raw_entry (image_uri) MATCH SIMPLE
         ON UPDATE NO ACTION
         ON DELETE NO ACTION
-)
+);
 
-TABLESPACE pg_default;
-
-ALTER TABLE IF EXISTS image_processing.processed_entry
+ALTER TABLE image_processing.processed_entry
     OWNER to gpig;
 
 
@@ -33,9 +31,7 @@ CREATE TABLE IF NOT EXISTS image_processing.raw_entry
     longitude double precision[] NOT NULL,
     date timestamp NOT NULL,
     CONSTRAINT raw_entry_pkey PRIMARY KEY (image_uri)
-)
+);
 
-TABLESPACE pg_default;
-
-ALTER TABLE IF EXISTS image_processing.raw_entry
+ALTER TABLE image_processing.raw_entry
     OWNER to gpig;
