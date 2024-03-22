@@ -3,6 +3,7 @@ import uuid
 
 from PIL import Image
 from PIL.ExifTags import GPSTAGS, TAGS
+from Util.Exceptions import GPSUndefinedError
 
 
 def save(image: Image, filename: str) -> str:
@@ -24,12 +25,7 @@ def gps_details(image: Image) -> {}:
         exif_table[decoded] = value
 
     if 'GPSInfo' not in exif_table.keys():
-        return {
-            'GPSLatitudeRef': 'N',
-            'GPSLatitude': (0, 0, 0),
-            'GPSLongitudeRef': 'W',
-            'GPSLongitude': (0, 0, 0)
-        }
+        raise GPSUndefinedError()
 
     gps_info = {}
     for key in exif_table['GPSInfo'].keys():

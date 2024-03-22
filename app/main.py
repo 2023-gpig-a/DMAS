@@ -6,14 +6,15 @@ import torch
 
 from fastapi.staticfiles import StaticFiles
 
-from Exceptions.PlantsUndetectedError import PlantsUndetectedError
+from Util.Exceptions import PlantsUndetectedError, GPSUndefinedError
 from Util import FileHandler
 from Util.Data import RawEntry, ProcessedEntry, load_config, connect, insert_raw_entry, insert_processed_entry
 from Models.HumanDetection.HumanDetector import Classifier as HumanDetector
 from Util.PlantDetector import detect
-from app.Messages import StatusEnum, MessageResponse, PlantGrowthDataResponse
+from app.Messages import StatusEnum, MessageResponse
 
 # START OPTIONS
+# TODO this is only temporarily disabled for testing, enable in the demo
 CHECK_HUMANS = False  # Verify if humans are in the image
 
 # Set up app
@@ -63,18 +64,25 @@ async def upload_image(file: UploadFile = File(...)):
         buf.close()
 
     # Check For Humans
-    img_normalised = human_detector.tensor_transform(im)
-    img_normalised = img_normalised.unsqueeze_(0)
-    img_normalised = img_normalised.to(device)
-    output = human_detector(img_normalised)
-    output = torch.argmax(output.detach().cpu())
-    if output == 1 and CHECK_HUMANS:
-        # If found, exit
-        return MessageResponse(status=StatusEnum.human_detected, message=["Human Detected"])
+    if CHECK_HUMANS:
+        img_normalised = human_detector.tensor_transform(im)
+        img_normalised = img_normalised.unsqueeze_(0)
+        img_normalised = img_normalised.to(device)
+        output = human_detector(img_normalised)
+        output = torch.argmax(output.detach().cpu())
+        if output == 1:
+            # If found, exit
+            return MessageResponse(status=StatusEnum.human_detected, message=["Human Detected"])
+
+    # Get GPS Data
+    try:
+        gps_info = FileHandler.gps_details(im)
+    except GPSUndefinedError:
+        return MessageResponse(status=StatusEnum.gps_undefined, message=["No GPS Data Attached To Image"])
 
     # Create Raw Entry
     loc = FileHandler.save(im, file.filename)
-    gps_info = FileHandler.gps_details(im)
+
     raw_entry = RawEntry(
         latitude=list(gps_info["GPSLatitude"]),
         longitude=list(gps_info["GPSLongitude"]),

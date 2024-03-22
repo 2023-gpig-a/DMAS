@@ -2,7 +2,7 @@ import requests
 import json
 from pprint import pprint
 
-from Exceptions.PlantsUndetectedError import PlantsUndetectedError
+from Util.Exceptions import PlantsUndetectedError
 
 
 def detect(image_path: str):
@@ -12,6 +12,7 @@ def detect(image_path: str):
     PROJECT = "all"  # try "weurope" or "canada"
     api_endpoint = f"https://my-api.plantnet.org/v2/identify/{PROJECT}?api-key={API_KEY}"
 
+    # TODO check leafs, fruit, and bark
     data = {'organs': ['flower']}
 
     files = [

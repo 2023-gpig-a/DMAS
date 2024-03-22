@@ -6,13 +6,30 @@ This system is responsible for the following:
 * Matching similar plants and assigning a `plant_id` to them
 * Tracking the growth of plants over time
 
-[//]: # (TODO update this to include building the models)
-## Running without docker
+## Setup
+### Configuration files
+```
+mv database.ini.example database.ini
+mv plantnet.example plantnet
+```
+Fill in database.ini with the username and password to your local postgresql database
+Pase your plantnet API key into plantnet, this can be created at https://my.plantnet.org/
+
+### Python venv
 ```
 python3 -m venv venv
 . venv/bin/activate (linux) or ./venv/Scripts/activate (win)
 python3 -m pip install -e
 pip install -r requirements.txt
+```
+
+### Train the human detection model
+```
+python3 Models/HumanDetection/HumanDetector.py
+```
+
+## Running without docker
+```
 uvicorn app.main:app --reload
 ```
 

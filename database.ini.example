@@ -1,0 +1,6 @@
+[postgresql]
+host=localhost
+database=gpig
+; fill in details below
+user=
+password=

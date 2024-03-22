@@ -8,6 +8,7 @@ class StatusEnum(str, Enum):
     success = "Success"
     human_detected = "Human Detected"
     plant_not_detected = "Plant Not Detected"
+    gps_undefined = "GPS Undefined"
 
 
 class MessageResponse(BaseModel):
