@@ -13,6 +13,7 @@ def detect(image_path: str):
     api_endpoint = f"https://my-api.plantnet.org/v2/identify/{PROJECT}?api-key={API_KEY}"
 
     # TODO check leafs, fruit, and bark
+    #   Check if this is able to detect different plants in an image
     data = {'organs': ['flower']}
 
     files = [
