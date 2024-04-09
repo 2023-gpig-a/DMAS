@@ -1,9 +1,9 @@
 import os
 import uuid
-
 from PIL import Image
 from PIL.ExifTags import GPSTAGS, TAGS
-from Util.Exceptions import GPSUndefinedError
+
+from util.exceptions import GPSUndefinedError
 
 
 def save(image: Image, filename: str) -> str:
