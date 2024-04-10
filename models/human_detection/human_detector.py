@@ -1,10 +1,11 @@
 import torch
 import torchvision.datasets as datasets
-from torch.utils.data import DataLoader, random_split
-from torchvision import transforms
 import torch.nn as nn
 import matplotlib.pyplot as plt
 import pickle
+
+from torch.utils.data import DataLoader, random_split
+from torchvision import transforms
 
 '''
 Human Detection Dataset
@@ -88,15 +89,13 @@ class Classifier(nn.Module):
         self.eval()
 
 
-
-
 def train(model: nn.Module, epochs: int = 0, device: str = "cpu", results_out: str = None, weights_out: str = None):
 
     # Set up our training environment
     model = model.to(device)
     optim = torch.optim.Adam(model.parameters())
 
-    dataset_src = "Datasets/human detection dataset"
+    dataset_src = "datasets/human detection dataset"
     people_dataset = datasets.ImageFolder(root=dataset_src, transform=model.tensor_transform)
     train_size = int(0.8 * len(people_dataset))
     test_size = len(people_dataset) - train_size

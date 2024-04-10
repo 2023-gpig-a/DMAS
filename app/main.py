@@ -6,12 +6,12 @@ import torch
 
 from fastapi.staticfiles import StaticFiles
 
-from Util.Exceptions import PlantsUndetectedError, GPSUndefinedError
-from Util import FileHandler
-from Util.Data import RawEntry, ProcessedEntry, load_config, connect, insert_raw_entry, insert_processed_entry
-from Models.HumanDetection.HumanDetector import Classifier as HumanDetector
-from Util.PlantDetector import detect
-from app.Messages import StatusEnum, MessageResponse
+from util import file_handler
+from util.data import RawEntry, ProcessedEntry, load_config, connect, insert_raw_entry, insert_processed_entry
+from util.exceptions import PlantsUndetectedError, GPSUndefinedError
+from util.plant_detector import detect
+from models.human_detection.human_detector import Classifier as HumanDetector
+from app.messages import StatusEnum, MessageResponse
 
 # START OPTIONS
 # TODO this is only temporarily disabled for testing, enable in the demo
@@ -53,9 +53,6 @@ async def upload_image(file: UploadFile = File(...)):
             im = im.convert("RGB")
         buf = io.BytesIO()
         im.save(buf, 'JPEG', quality=50)
-        # to get the entire bytes of the buffer use:
-        contents = buf.getvalue()
-        # or, to read from `buf` (which is a file-like object), call this first:
         buf.seek(0)  # to rewind the cursor to the start of the buffer
     except Exception:
         raise HTTPException(status_code=500, detail='Something went wrong')
@@ -76,12 +73,12 @@ async def upload_image(file: UploadFile = File(...)):
 
     # Get GPS Data
     try:
-        gps_info = FileHandler.gps_details(im)
+        gps_info = file_handler.gps_details(im)
     except GPSUndefinedError:
         return MessageResponse(status=StatusEnum.gps_undefined, message=["No GPS Data Attached To Image"])
 
     # Create Raw Entry
-    loc = FileHandler.save(im, file.filename)
+    loc = file_handler.save(im, file.filename)
 
     raw_entry = RawEntry(
         latitude=list(gps_info["GPSLatitude"]),

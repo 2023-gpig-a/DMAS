@@ -1,5 +1,5 @@
-/Models/HumanDetection/weights/
-/Models/HumanDetection/Datasets/
-/Data/
+/models/human_detection/weights/
+/models/human_detection/datasets/
+/data/
 plantnet_API_key
 database.ini

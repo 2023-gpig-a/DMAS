@@ -2,7 +2,7 @@ import requests
 import json
 from pprint import pprint
 
-from Util.Exceptions import PlantsUndetectedError
+from util.exceptions import PlantsUndetectedError
 
 
 def detect(image_path: str):
@@ -33,5 +33,5 @@ def detect(image_path: str):
 
 
 if __name__ == "__main__":
-    results = detect("../Data/succulents.jpg")
+    results = detect("../data/succulents.jpg")
     pprint(results)

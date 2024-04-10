@@ -1,8 +1,9 @@
 import random
 import uuid
-from datetime import datetime, timedelta
-from Util.Data import RawEntry, ProcessedEntry, insert_raw_entry, insert_processed_entry, load_config, connect
 import math
+from datetime import datetime, timedelta
+
+from util.data import RawEntry, ProcessedEntry, insert_raw_entry, insert_processed_entry, load_config, connect
 
 
 def growth_map(
