@@ -86,7 +86,7 @@ class Classifier(nn.Module):
 
     def load(self, state_dict_loc: str = None) -> None:
         if state_dict_loc is None:
-            state_dict_loc = "Models/HumanDetection/weights/human_classification_weights.pkl"
+            state_dict_loc = "models/human_detection/weights/human_classification_weights.pkl"
         self.load_state_dict(torch.load(state_dict_loc))
         self.eval()
 

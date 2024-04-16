@@ -11,7 +11,7 @@ from util.data import RawEntry, ProcessedEntry, load_database_config, connect, i
 from util.exceptions import PlantsUndetectedError, GPSUndefinedError
 from util.plant_detector import detect
 from models.human_detection.human_detector import Classifier as HumanDetector
-from app.messages import StatusEnum, MessageResponse
+from app.messages import StatusEnum, MessageResponse, PlantGrowthDataResponse, PlantGrowthDatum
 
 # START OPTIONS
 # TODO this is only temporarily disabled for testing, enable in the demo
@@ -22,7 +22,7 @@ app = FastAPI()
 app.mount("/ui", StaticFiles(directory="app/static", html=True), name="static")
 
 # Set up PostgreSQL
-config = load_database_config()
+config = load_database_config("config.ini")
 conn = connect(config)
 
 # Get device for ML
@@ -115,6 +115,33 @@ async def upload_image(file: UploadFile = File(...)):
 
 @app.get("/track_growth")
 async def track_growth():
-    raise HTTPException(
-        status_code=status.HTTP_501_NOT_IMPLEMENTED
-    )
+
+    def format_datum(datum):
+        return [[date, int(count)] for date, count in datum]
+
+    SQL = """
+    SELECT 
+        plant_id, 
+        ARRAY_AGG(ARRAY[TO_CHAR(DATE_TRUNC('day', date), 'YYYY-MM-DD'), count::text] ORDER BY date) AS date_counts
+    FROM (
+        SELECT 
+            t1.plant_id, 
+            t2.date, 
+            COUNT(*) AS count
+        FROM 
+            image_processing.processed_entry t1
+        JOIN 
+            image_processing.raw_entry t2 ON t1.image_uri = t2.image_uri
+        GROUP BY 
+            t1.plant_id, t2.date
+    ) AS subquery
+    GROUP BY 
+        plant_id;
+    """
+
+    with conn.cursor() as cursor:
+        cursor.execute(SQL)
+        data = cursor.fetchall()
+        return PlantGrowthDataResponse(
+            plant_growth_data=[PlantGrowthDatum(species=s, plant_growth_datum=format_datum(d)) for s, d in data]
+        )
