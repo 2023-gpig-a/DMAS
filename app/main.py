@@ -7,7 +7,7 @@ import torch
 from fastapi.staticfiles import StaticFiles
 
 from util import file_handler
-from util.data import RawEntry, ProcessedEntry, load_config, connect, insert_raw_entry, insert_processed_entry
+from util.data import RawEntry, ProcessedEntry, load_database_config, connect, insert_raw_entry, insert_processed_entry
 from util.exceptions import PlantsUndetectedError, GPSUndefinedError
 from util.plant_detector import detect
 from models.human_detection.human_detector import Classifier as HumanDetector
@@ -22,7 +22,7 @@ app = FastAPI()
 app.mount("/ui", StaticFiles(directory="app/static", html=True), name="static")
 
 # Set up PostgreSQL
-config = load_config()
+config = load_database_config()
 conn = connect(config)
 
 # Get device for ML

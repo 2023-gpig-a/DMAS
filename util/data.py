@@ -1,4 +1,5 @@
 from datetime import datetime
+import os
 from typing import List
 from pydantic import BaseModel
 from configparser import ConfigParser
@@ -19,18 +20,34 @@ class ProcessedEntry(BaseModel):
 # Database entries end
 
 
-def load_config(section='postgresql', filename='database.ini'):
+def load_plant_net_api_key(filename=os.getenv('CONFIG_FILE', "../config.ini")):
     parser = ConfigParser()
     parser.read(filename)
 
     # get section
     config = {}
-    if parser.has_section(section):
-        params = parser.items(section)
+    if parser.has_section('plantnet'):
+        params = parser.items('plantnet')
         for param in params:
             config[param[0]] = param[1]
     else:
-        raise Exception(f'Section {section} not found in the {filename} file')
+        raise Exception(f'Section plantnet not found in the {filename} file')
+
+    return config
+
+
+def load_database_config(filename=os.getenv('CONFIG_FILE', "../config.ini")):
+    parser = ConfigParser()
+    parser.read(filename)
+
+    # get section
+    config = {}
+    if parser.has_section('postgresql'):
+        params = parser.items('postgresql')
+        for param in params:
+            config[param[0]] = param[1]
+    else:
+        raise Exception(f'Section postgresql not found in the {filename} file')
 
     return config
 

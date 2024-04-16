@@ -9,11 +9,10 @@ This system is responsible for the following:
 ## Setup
 ### Configuration files
 ```
-mv database.ini.example database.ini
-mv plantnet.example plantnet
+mv config.ini.example config.ini
 ```
-Fill in database.ini with the username and password to your local postgresql database
-Pase your plantnet API key into plantnet, this can be created at https://my.plantnet.org/
+Fill in config.ini with the username and password to your postgresql database.
+Paste your plantnet API key into the api_key section, this can be created at https://my.plantnet.org/.
 
 ### Python venv
 ```
@@ -25,7 +24,7 @@ pip install -r requirements.txt
 
 ### Train the human detection model
 ```
-python3 Models/HumanDetection/HumanDetector.py
+python3 models/human_detection/human_detector.py
 ```
 
 ## Running without docker

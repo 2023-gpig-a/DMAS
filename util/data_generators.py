@@ -3,7 +3,7 @@ import uuid
 import math
 from datetime import datetime, timedelta
 
-from util.data import RawEntry, ProcessedEntry, insert_raw_entry, insert_processed_entry, load_config, connect
+from util.data import RawEntry, ProcessedEntry, insert_raw_entry, insert_processed_entry, load_database_config, connect
 
 
 def growth_map(
@@ -45,7 +45,7 @@ def generate_entry(conn, date: datetime, plant_id: str) -> None:
 if __name__ == "__main__":
 
     #  Setup up variables
-    config = load_config(filename="../database.ini")
+    config = load_database_config()
     conn = connect(config)
     days = list(range(0, 360))
     datetime_days = [datetime.today() + timedelta(days=date) for date in days]
