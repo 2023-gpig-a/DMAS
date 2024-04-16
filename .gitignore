@@ -1,8 +1,7 @@
 /models/human_detection/weights/
 /models/human_detection/datasets/
 /data/
-plantnet_API_key
-database.ini
+config.ini
 venv/
 weights/
 datasets/

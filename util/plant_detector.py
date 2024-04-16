@@ -2,12 +2,13 @@ import requests
 import json
 from pprint import pprint
 
+from util.data import load_plant_net_api_key
 from util.exceptions import PlantsUndetectedError
 
 
 def detect(image_path: str):
-    with open("plantnet_API_key", "r") as file:
-        API_KEY = file.readline()
+    config = load_plant_net_api_key()
+    API_KEY = config["api_key"]
 
     PROJECT = "all"  # try "weurope" or "canada"
     api_endpoint = f"https://my-api.plantnet.org/v2/identify/{PROJECT}?api-key={API_KEY}"
