@@ -25,7 +25,7 @@ pip install -r requirements.txt
 
 ### Train the human detection model
 ```
-python3 Models/HumanDetection/HumanDetector.py
+python3 models/human_detection/human_detector.py
 ```
 
 ## Running without docker

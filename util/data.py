@@ -1,4 +1,5 @@
 from datetime import datetime
+import os
 from typing import List
 from pydantic import BaseModel
 from configparser import ConfigParser
@@ -19,7 +20,7 @@ class ProcessedEntry(BaseModel):
 # Database entries end
 
 
-def load_config(section='postgresql', filename='database.ini'):
+def load_config(section='postgresql', filename=os.getenv('DATABASE_CONFIG_FILE', "../database.ini")):
     parser = ConfigParser()
     parser.read(filename)
 

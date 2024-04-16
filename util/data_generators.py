@@ -1,3 +1,4 @@
+import os
 import random
 import uuid
 import math
@@ -45,7 +46,7 @@ def generate_entry(conn, date: datetime, plant_id: str) -> None:
 if __name__ == "__main__":
 
     #  Setup up variables
-    config = load_config(filename="../database.ini")
+    config = load_config(filename=os.getenv('DATABASE_CONFIG_FILE', "../database.ini"))
     conn = connect(config)
     days = list(range(0, 360))
     datetime_days = [datetime.today() + timedelta(days=date) for date in days]
