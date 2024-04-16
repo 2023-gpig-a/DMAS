@@ -1,3 +1,5 @@
+import pathlib
+import sys
 import torch
 import torchvision.datasets as datasets
 import torch.nn as nn
@@ -96,7 +98,13 @@ def train(model: nn.Module, epochs: int = 0, device: str = "cpu", results_out: s
     optim = torch.optim.Adam(model.parameters())
 
     dataset_src = "datasets/human detection dataset"
-    people_dataset = datasets.ImageFolder(root=dataset_src, transform=model.tensor_transform)
+    try:
+        people_dataset = datasets.ImageFolder(root=dataset_src, transform=model.tensor_transform)
+    except FileNotFoundError:
+        print('Dataset not found. Make sure you have downloaded the human detection dataset from')
+        print('https://www.kaggle.com/datasets/constantinwerner/human-detection-dataset')
+        print(f'and saved it to {dataset_src}')
+        sys.exit(1)
     train_size = int(0.8 * len(people_dataset))
     test_size = len(people_dataset) - train_size
     train_dataset, validation_dataset = random_split(people_dataset,[train_size, test_size])
@@ -174,7 +182,9 @@ def train(model: nn.Module, epochs: int = 0, device: str = "cpu", results_out: s
                 "val_accuracy": validation_accuracies,
                 "val_losses": validation_losses,
             }
-            with open(results_out, "wb") as file:
+            # Ensure the weights directory exists
+            pathlib.Path(results_out).parent.mkdir(parents=True, exist_ok=True)
+            with open(results_out, "wb+") as file:
                 pickle.dump(data, file)
 
         if weights_out is not None:
