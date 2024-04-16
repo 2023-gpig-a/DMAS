@@ -86,8 +86,13 @@ class Classifier(nn.Module):
 
     def load(self, state_dict_loc: str = None) -> None:
         if state_dict_loc is None:
-            state_dict_loc = "models/human_detection/weights/human_classification_weights.pkl"
-        self.load_state_dict(torch.load(state_dict_loc))
+            state_dict_loc = "weights/human_classification_weights.pkl"
+        device = "cpu"
+        if torch.backends.mps.is_available():
+            device = "mps"
+        if torch.cuda.is_available():
+            device = "cuda"
+        self.load_state_dict(torch.load(state_dict_loc, map_location=device))
         self.eval()
 
 
