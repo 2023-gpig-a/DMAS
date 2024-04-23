@@ -102,7 +102,7 @@ def train(model: nn.Module, epochs: int = 0, device: str = "cpu", results_out: s
     model = model.to(device)
     optim = torch.optim.Adam(model.parameters())
 
-    dataset_src = "datasets/human detection dataset"
+    dataset_src = "datasets/human_detection_dataset"
     try:
         people_dataset = datasets.ImageFolder(root=dataset_src, transform=model.tensor_transform)
     except FileNotFoundError:
@@ -229,9 +229,9 @@ if __name__ == "__main__":
 
     train(
         model,
-        20,
+        7,
         device,
         "weights/human_classification_results.pkl",
         "weights/human_classification_weights.pkl"
     )
-    display_training_graphs("human_classification_results.pkl")
+    display_training_graphs("weights/human_classification_results.pkl")
