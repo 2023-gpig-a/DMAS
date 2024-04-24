@@ -8,8 +8,8 @@ import psycopg2
 
 # Database entries start
 class RawEntry(BaseModel):
-    latitude: List[float]
-    longitude: List[float]
+    latitude: float
+    longitude: float
     image_uri: str
     date: datetime
 

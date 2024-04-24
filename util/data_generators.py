@@ -28,8 +28,8 @@ def generate_entry(conn, date: datetime, plant_id: str) -> None:
     image_uri = uuid.uuid4().hex
 
     raw_entry = RawEntry(
-        latitude=[random.random(), random.random(), random.random()],
-        longitude=[random.random(), random.random(), random.random()],
+        latitude=random.random(),
+        longitude=random.random(),
         image_uri=image_uri,
         date=date
     )
