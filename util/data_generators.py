@@ -25,11 +25,16 @@ def growth_map(
 
 
 def generate_entry(conn, date: datetime, plant_id: str) -> None:
-    image_uri = uuid.uuid4().hex
+    # TODO in demo, put the location and range of an actual forest here
+    LOCATION_CENTER = [0, 0]
+    RANGE_DEGREES = 0.5  # A range of 1 degree is approximately 69 miles from center (nice)
 
+    image_uri = uuid.uuid4().hex
+    plant_angle = random.random() * 360
+    plant_distance = random.random() * RANGE_DEGREES
     raw_entry = RawEntry(
-        latitude=random.random(),
-        longitude=random.random(),
+        latitude=LOCATION_CENTER[0] + math.cos(plant_angle) * plant_distance,
+        longitude=LOCATION_CENTER[1] + math.sin(plant_angle) * plant_distance,
         image_uri=image_uri,
         date=date
     )
@@ -48,7 +53,7 @@ if __name__ == "__main__":
     config = load_database_config()
     conn = connect(config)
     days = list(range(0, 360))
-    datetime_days = [datetime.today() + timedelta(days=date) for date in days]
+    datetime_days = [datetime.today() - timedelta(days=360) + timedelta(days=date) for date in days]
 
     # Clear existing data
     clear_database = input("Would you like to clear the database (N/y)")

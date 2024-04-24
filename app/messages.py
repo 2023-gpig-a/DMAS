@@ -15,9 +15,16 @@ class MessageResponse(BaseModel):
     message: List[str]
 
 
-class PlantGrowthDatum(BaseModel):
+class PlantInstanceData(BaseModel):
+    date: str
+    latitude: float
+    longitude: float
+    count: int
+
+
+class PlantIdData(BaseModel):
     species: str
-    plant_growth_datum: List[Tuple[str, int]]
+    plant_growth_datum: List[PlantInstanceData]
 
 
 class PlantGrowthDataResponse(BaseModel):
@@ -25,4 +32,4 @@ class PlantGrowthDataResponse(BaseModel):
     # Each elem in plant_growth_data represents the proportion of plants identified that were class p in a given day
     # These will be sent to the LLM api to be formatted into a prompt for the LLM
     # We send one of these for each plant_id we have discovered
-    plant_growth_data: List[PlantGrowthDatum]
+    plant_growth_data: List[PlantIdData]
