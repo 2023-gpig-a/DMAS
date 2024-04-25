@@ -165,7 +165,6 @@ async def track_growth(center: Tuple[float, float] = None, scan_range: float = 3
     with conn.cursor() as cursor:
         cursor.execute(SQL)
         data = cursor.fetchall()
-        print(data)
         return PlantGrowthDataResponse(
             plant_growth_data=[PlantIdData(species=s, plant_growth_datum=format_datum(d)) for s, d in data]
         )
