@@ -24,12 +24,15 @@ def growth_map(
     return max(0, out)
 
 
-def generate_entry(conn, date: datetime, plant_id: str) -> None:
-    image_uri = uuid.uuid4().hex
+def generate_entry(conn, date: datetime, plant_id: str, location_center=(54.39, -0.037), range_degrees=0.01) -> None:
+    # A range of 1 degree is approximately 69 miles from center (nice)
 
+    image_uri = uuid.uuid4().hex
+    plant_angle = random.random() * 360
+    plant_distance = random.random() * range_degrees
     raw_entry = RawEntry(
-        latitude=[random.random(), random.random(), random.random()],
-        longitude=[random.random(), random.random(), random.random()],
+        latitude=location_center[0] + math.cos(plant_angle) * plant_distance,
+        longitude=location_center[1] + math.sin(plant_angle) * plant_distance,
         image_uri=image_uri,
         date=date
     )
@@ -48,7 +51,7 @@ if __name__ == "__main__":
     config = load_database_config()
     conn = connect(config)
     days = list(range(0, 360))
-    datetime_days = [datetime.today() + timedelta(days=date) for date in days]
+    datetime_days = [datetime.today() - timedelta(days=360) + timedelta(days=date) for date in days]
 
     # Clear existing data
     clear_database = input("Would you like to clear the database (N/y)")
