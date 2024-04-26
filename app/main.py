@@ -116,18 +116,15 @@ async def upload_image(file: UploadFile = File(...)):
         ])
 
 
-@app.get("/track_growth/")
-async def track_growth(center: Tuple[float, float] = None, scan_range: float = 360, day_range: int = 1000):
-
-    if center is None:
-        center = (0, 0)
+@app.get("/track_growth")
+async def track_growth(center: Tuple[float, float] = (0, 0), scan_range: float = 360, day_range: int = 1000):
 
     SQL = f"""
     SELECT 
         plant_id, 
         ARRAY_AGG(
             ARRAY[
-                TO_CHAR(DATE_TRUNC('day', date), 'YYYY-MM-DD'), 
+                TO_CHAR(date, 'YYYY-MM-DD'),  
                 latitude::text,
                 longitude::text,
                 count::text

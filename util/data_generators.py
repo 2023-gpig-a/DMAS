@@ -24,17 +24,15 @@ def growth_map(
     return max(0, out)
 
 
-def generate_entry(conn, date: datetime, plant_id: str) -> None:
-    # TODO in demo, put the location and range of an actual forest here
-    LOCATION_CENTER = [0, 0]
-    RANGE_DEGREES = 0.5  # A range of 1 degree is approximately 69 miles from center (nice)
+def generate_entry(conn, date: datetime, plant_id: str, location_center=(54.39, -0.037), range_degrees=0.01) -> None:
+    # A range of 1 degree is approximately 69 miles from center (nice)
 
     image_uri = uuid.uuid4().hex
     plant_angle = random.random() * 360
-    plant_distance = random.random() * RANGE_DEGREES
+    plant_distance = random.random() * range_degrees
     raw_entry = RawEntry(
-        latitude=LOCATION_CENTER[0] + math.cos(plant_angle) * plant_distance,
-        longitude=LOCATION_CENTER[1] + math.sin(plant_angle) * plant_distance,
+        latitude=location_center[0] + math.cos(plant_angle) * plant_distance,
+        longitude=location_center[1] + math.sin(plant_angle) * plant_distance,
         image_uri=image_uri,
         date=date
     )
