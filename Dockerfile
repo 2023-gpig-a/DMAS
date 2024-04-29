@@ -18,4 +18,8 @@ EXPOSE 8080/tcp
 COPY . /app
 WORKDIR /app
 
+# make sure the weights have been copied in
+# fails if they haven't
+RUN [ -f "./models/human_detection/weights/human_classification_results.pkl" ]
+
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8080"]
