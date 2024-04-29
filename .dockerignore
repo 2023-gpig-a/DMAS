@@ -3,5 +3,6 @@
 
 ./config.ini
 ./Dockerfile
-./.dockerignore
 ./.git
+
+./models/human_detection/datasets
