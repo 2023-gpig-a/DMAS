@@ -6,7 +6,10 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get update \
 
 # install requirements before adding app
 COPY ./requirements.txt /tmp
-RUN pip install --no-cache-dir --upgrade -r /tmp/requirements.txt
+RUN pip install \
+    --disable-pip-version-check \
+    --no-python-version-warning \
+    --no-cache-dir --upgrade -r /tmp/requirements.txt
 RUN rm /tmp/requirements.txt
 
 # expose default non-privileged HTTP port
