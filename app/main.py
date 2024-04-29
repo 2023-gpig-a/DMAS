@@ -2,11 +2,11 @@ from datetime import datetime
 from typing import Tuple
 
 from fastapi import FastAPI, HTTPException, status, File, UploadFile
+from fastapi.staticfiles import StaticFiles
 from PIL import Image
 import io
 import torch
-
-from fastapi.staticfiles import StaticFiles
+import os
 
 from util import file_handler
 from util.data import RawEntry, ProcessedEntry, load_database_config, connect, insert_raw_entry, insert_processed_entry
@@ -36,9 +36,13 @@ if torch.cuda.is_available():
 
 # Load Models
 human_detector = HumanDetector(pretrained=False)
+
+# check for weights location
+location = "app/models/human_detection/weights/human_classification_weights.pkl"
+if not os.path.exists(location):
+    location = "/models/human_detection/weights/human_classification_weights.pkl"
 human_detector.load("models/human_detection/weights/human_classification_weights.pkl")
 human_detector = human_detector.to(device)
-
 
 @app.get("/")
 async def hello_world():
