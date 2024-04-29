@@ -1,0 +1,7 @@
+./.venv
+./venv
+
+./config.ini
+./Dockerfile
+./.dockerignore
+./.git
