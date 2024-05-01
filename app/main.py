@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Tuple
 
-from fastapi import FastAPI, HTTPException, status, File, UploadFile
+from fastapi import FastAPI, HTTPException, File, UploadFile, Response
 from PIL import Image
 import io
 import torch
@@ -12,6 +12,7 @@ from util import file_handler
 from util.data import RawEntry, ProcessedEntry, load_database_config, connect, insert_raw_entry, insert_processed_entry
 from util.exceptions import PlantsUndetectedError, GPSUndefinedError
 from util.plant_detector import detect
+from util.data_generators import growth_map, insert_data, clear_data
 from models.human_detection.human_detector import Classifier as HumanDetector
 from app.messages import StatusEnum, MessageResponse, PlantGrowthDataResponse, PlantIdData, PlantInstanceData
 
@@ -117,7 +118,7 @@ async def upload_image(file: UploadFile = File(...)):
 
 
 @app.get("/track_growth")
-async def track_growth(center: Tuple[float, float] = (0, 0), scan_range: float = 360, day_range: int = 1000):
+async def track_growth(center: Tuple[float, float] = (0, 0), scan_range: float = 360, day_range: int = 1000) :
 
     SQL = f"""
     SELECT 
@@ -165,3 +166,30 @@ async def track_growth(center: Tuple[float, float] = (0, 0), scan_range: float =
         return PlantGrowthDataResponse(
             plant_growth_data=[PlantIdData(species=s, plant_growth_datum=format_datum(d)) for s, d in data]
         )
+
+
+@app.get("/clear_database")
+def clear_database():
+    clear_data(conn)
+
+    return Response(status_code=200)
+
+
+@app.get("/fill_database")
+def fill_database(destructive: bool = False, exponential: bool = False):
+
+    days = list(range(0, 360))
+
+    if not exponential:
+        totals_knotweed = [growth_map(x) for x in days]
+        totals_rose = [growth_map(x, offset=3) for x in days]
+    elif exponential and destructive:
+        totals_knotweed = [growth_map(x, growth_factor=0.1) for x in days]
+        totals_rose = [growth_map(x, growth_factor=-0.1) for x in days]
+    elif exponential and not destructive:
+        totals_knotweed = [growth_map(x, growth_factor=0.1) for x in days]
+        totals_rose = [growth_map(x, offset=3) for x in days]
+
+    insert_data(totals_knotweed, totals_rose, conn)
+
+    return Response(status_code=200)
