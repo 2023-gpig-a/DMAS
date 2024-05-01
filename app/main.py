@@ -1,4 +1,6 @@
 from datetime import datetime
+from typing import Tuple
+
 from fastapi import FastAPI, HTTPException, status, File, UploadFile
 from PIL import Image
 import io
@@ -11,7 +13,7 @@ from util.data import RawEntry, ProcessedEntry, load_database_config, connect, i
 from util.exceptions import PlantsUndetectedError, GPSUndefinedError
 from util.plant_detector import detect
 from models.human_detection.human_detector import Classifier as HumanDetector
-from app.messages import StatusEnum, MessageResponse
+from app.messages import StatusEnum, MessageResponse, PlantGrowthDataResponse, PlantIdData, PlantInstanceData
 
 # START OPTIONS
 # TODO this is only temporarily disabled for testing, enable in the demo
@@ -22,7 +24,7 @@ app = FastAPI()
 app.mount("/ui", StaticFiles(directory="app/static", html=True), name="static")
 
 # Set up PostgreSQL
-config = load_database_config()
+config = load_database_config("config.ini")
 conn = connect(config)
 
 # Get device for ML
@@ -33,7 +35,8 @@ if torch.cuda.is_available():
     device = "cuda"
 
 # Load Models
-human_detector = HumanDetector(pretrained=True)
+human_detector = HumanDetector(pretrained=False)
+human_detector.load("models/human_detection/weights/human_classification_weights.pkl")
 human_detector = human_detector.to(device)
 
 
@@ -114,7 +117,51 @@ async def upload_image(file: UploadFile = File(...)):
 
 
 @app.get("/track_growth")
-async def track_growth():
-    raise HTTPException(
-        status_code=status.HTTP_501_NOT_IMPLEMENTED
-    )
+async def track_growth(center: Tuple[float, float] = (0, 0), scan_range: float = 360, day_range: int = 1000):
+
+    SQL = f"""
+    SELECT 
+        plant_id, 
+        ARRAY_AGG(
+            ARRAY[
+                TO_CHAR(date, 'YYYY-MM-DD'),  
+                latitude::text,
+                longitude::text,
+                count::text
+            ] ORDER BY date
+        ) AS date_counts
+    FROM (
+        SELECT 
+            t1.plant_id, 
+            t2.date, 
+            t2.latitude,
+            t2.longitude,
+            COUNT(*) AS count
+        FROM 
+            image_processing.processed_entry t1
+        JOIN 
+            image_processing.raw_entry t2 ON t1.image_uri = t2.image_uri
+        WHERE
+            (({center[0]} + t2.latitude)^2 + ({center[1]} + t2.longitude)^2) <= {scan_range}^2
+            AND t2.date BETWEEN CURRENT_DATE - {day_range} AND CURRENT_DATE 
+        GROUP BY 
+            t1.plant_id, t2.date, t2.latitude, t2.longitude
+    ) AS subquery
+    GROUP BY 
+        plant_id;
+    """
+
+    def format_datum(datum):
+        return [PlantInstanceData(
+            date=date,
+            latitude=float(lat),
+            longitude=float(long),
+            count=int(count)
+        ) for date, lat, long, count in datum]
+
+    with conn.cursor() as cursor:
+        cursor.execute(SQL)
+        data = cursor.fetchall()
+        return PlantGrowthDataResponse(
+            plant_growth_data=[PlantIdData(species=s, plant_growth_datum=format_datum(d)) for s, d in data]
+        )

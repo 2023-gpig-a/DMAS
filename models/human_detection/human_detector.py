@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 import pickle
 
 from torch.utils.data import DataLoader, random_split
-from torchvision import transforms
+from torchvision.transforms import v2 as transforms
 
 '''
 Human Detection Dataset
@@ -20,7 +20,7 @@ Acquired on Wednesday 29th November
 class Classifier(nn.Module):
 
     # Create the train and val dataloaders and the model
-    def __init__(self, batch_size: int = 32, pretrained: bool = True):
+    def __init__(self, batch_size: int = 32, pretrained: bool = True, model_scale: int = 16):
         super(Classifier, self).__init__()
 
         # Create dataloaders
@@ -30,43 +30,52 @@ class Classifier(nn.Module):
             transforms.PILToTensor(),
             transforms.Resize((128, 128), antialias=True),
             transforms.Lambda(lambda y: y.float() / 255),
-            transforms.Normalize(0.5, 0.5),
+            transforms.RandomRotation(30, expand=True),
+            transforms.RandomCrop(128),
+            transforms.RandomHorizontalFlip(0.5),
+            transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
         ])
 
         # Define Model
         self.conv_layers = nn.Sequential(
 
-            nn.Conv2d(in_channels=3, out_channels=4, kernel_size=3, stride=1, padding=1),
-            nn.BatchNorm2d(4),
-            nn.ReLU(),
-            nn.MaxPool2d(kernel_size=2, stride=2),  # B x 4 x 64 x 64
+            nn.Conv2d(in_channels=3, out_channels=model_scale, kernel_size=5, stride=1, padding=2),
+            nn.BatchNorm2d(model_scale),
+            nn.LeakyReLU(),
+            nn.MaxPool2d(kernel_size=2, stride=2),  # B x 8 x 64 x 64
+            nn.Dropout(0.2),
 
-            nn.Conv2d(in_channels=4, out_channels=16, kernel_size=3, stride=1, padding=1),
-            nn.BatchNorm2d(16),
-            nn.ReLU(),
+            nn.Conv2d(in_channels=model_scale, out_channels=2 * model_scale, kernel_size=3, stride=1, padding=1),
+            nn.BatchNorm2d(2 * model_scale),
+            nn.LeakyReLU(),
             nn.MaxPool2d(kernel_size=2, stride=2),  # B x 16 x 32 x 32
+            nn.Dropout(0.2),
 
-            nn.Conv2d(in_channels=16, out_channels=32, kernel_size=3, stride=1, padding=1),
-            nn.BatchNorm2d(32),
-            nn.ReLU(),
+            nn.Conv2d(in_channels=2 * model_scale, out_channels=4 * model_scale, kernel_size=3, stride=1, padding=1),
+            nn.BatchNorm2d(4 * model_scale),
+            nn.LeakyReLU(),
             nn.MaxPool2d(kernel_size=2, stride=2),  # B x 32 x 16 x 16
+            nn.Dropout(0.2),
 
-            nn.Conv2d(in_channels=32, out_channels=16, kernel_size=3, stride=1, padding=1),
-            nn.BatchNorm2d(16),
-            nn.ReLU(),
-            nn.MaxPool2d(kernel_size=2, stride=2),  # B x 16 x 8 x 8
+            nn.Conv2d(in_channels=4 * model_scale, out_channels=8 * model_scale, kernel_size=3, stride=1, padding=1),
+            nn.BatchNorm2d(8 * model_scale),
+            nn.LeakyReLU(),
+            nn.MaxPool2d(kernel_size=2, stride=2),  # B x 48 x 8 x 8
+            nn.Dropout(0.2),
 
-            nn.Conv2d(in_channels=16, out_channels=8, kernel_size=3, stride=1, padding=1),
-            nn.BatchNorm2d(8),
-            nn.ReLU(),
-            nn.MaxPool2d(kernel_size=2, stride=2),  # B x 8 x 4 x 4
+            nn.Conv2d(in_channels=8 * model_scale, out_channels=16 * model_scale, kernel_size=3, stride=1, padding=1),
+            nn.BatchNorm2d(16 * model_scale),
+            nn.LeakyReLU(),
+            nn.MaxPool2d(kernel_size=2, stride=2),  # B x 64 x 4 x 4
+            nn.Dropout(0.2),
 
         )
         self.MLP = nn.Sequential(
-            nn.Linear(in_features=8 * 4 * 4, out_features=4),
-            nn.BatchNorm1d(4),
-            nn.ReLU(),
-            nn.Linear(in_features=4, out_features=2),
+            nn.Linear(in_features=16 * model_scale * 4 * 4, out_features=2 * model_scale),
+            nn.Dropout(0.5),
+            nn.BatchNorm1d(2 * model_scale),
+            nn.LeakyReLU(),
+            nn.Linear(in_features=2 * model_scale, out_features=2),
             nn.Softmax(dim=1)
         )
 
@@ -96,11 +105,37 @@ class Classifier(nn.Module):
         self.eval()
 
 
-def train(model: nn.Module, epochs: int = 0, device: str = "cpu", results_out: str = None, weights_out: str = None):
+def setup_log(log_out):
+    if log_out is None:
+        return None
+
+    log = {}
+    # use a+ even though we write nothing because we want to create a file if it doesn't exist
+    with open(log_out, "a+") as file:
+        for line in file.readlines():
+            entry = line.split("=")
+            log[entry[0]] = entry[1]
+
+    if "best_accuracy" not in log:
+        log["best_accuracy"] = 0
+    log["best_accuracy"] = float(log["best_accuracy"])
+
+    return log
+
+
+def train(
+        model: nn.Module,
+        epochs: int = 0,
+        device: str = "cpu",
+        results_out: str = None,
+        weights_out: str = None,
+        log_out: str = None
+):
 
     # Set up our training environment
     model = model.to(device)
     optim = torch.optim.Adam(model.parameters())
+    log = setup_log(log_out)
 
     dataset_src = "datasets/human_detection_dataset"
     try:
@@ -115,7 +150,6 @@ def train(model: nn.Module, epochs: int = 0, device: str = "cpu", results_out: s
     train_dataset, validation_dataset = random_split(people_dataset,[train_size, test_size])
     train_loader = DataLoader(dataset=train_dataset, batch_size=model.batch_size, shuffle=True)
     validation_loader = DataLoader(dataset=validation_dataset, batch_size=model.batch_size, shuffle=True)
-
     loss_func = nn.CrossEntropyLoss()
 
     # These variables will store the data for analysis
@@ -192,8 +226,12 @@ def train(model: nn.Module, epochs: int = 0, device: str = "cpu", results_out: s
             with open(results_out, "wb+") as file:
                 pickle.dump(data, file)
 
-        if weights_out is not None:
-            torch.save(model.state_dict(), weights_out)
+        if weights_out is not None and log is not None and round(validation_accuracy, 2) > log["best_accuracy"]:
+            torch.save(model.state_dict(), f"{weights_out}")
+            log["best_accuracy"] = round(validation_accuracy,2)
+            with open(log_out, "w") as file:
+                for key, value in log.items():
+                    file.write(f"{key}={value}\n")
 
 
 def display_training_graphs(src_location: str):
@@ -221,6 +259,9 @@ if __name__ == "__main__":
     # Run this to train the model and save the weights
     model = Classifier(batch_size=6, pretrained=False)
 
+    # Uncomment if you want to continue training an existing model
+    # model.load("weights/human_classification_weights_latest.pkl")
+
     device = "cpu"
     if torch.backends.mps.is_available():
         device = "mps"
@@ -229,9 +270,11 @@ if __name__ == "__main__":
 
     train(
         model,
-        7,
+        50,
         device,
         "weights/human_classification_results.pkl",
-        "weights/human_classification_weights.pkl"
+        "weights/human_classification_weights.pkl",
+        "weights/train.info"
     )
+
     display_training_graphs("weights/human_classification_results.pkl")
