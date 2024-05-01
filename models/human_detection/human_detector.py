@@ -137,7 +137,7 @@ def train(
     optim = torch.optim.Adam(model.parameters())
     log = setup_log(log_out)
 
-    dataset_src = "datasets/human detection dataset"
+    dataset_src = "datasets/human_detection_dataset"
     try:
         people_dataset = datasets.ImageFolder(root=dataset_src, transform=model.tensor_transform)
     except FileNotFoundError:
@@ -277,5 +277,4 @@ if __name__ == "__main__":
         "weights/train.info"
     )
 
-    torch.save(model.state_dict(), "weights/human_classification_weights.pkl")
     display_training_graphs("weights/human_classification_results.pkl")
