@@ -38,7 +38,7 @@ app.add_middleware(
 app.mount("/ui", StaticFiles(directory="app/static", html=True), name="static")
 
 # Set up PostgreSQL
-config = load_database_config()
+config = load_database_config("config.ini")
 conn = connect(config)
 
 # Get device for ML
