@@ -132,7 +132,7 @@ async def upload_image(file: UploadFile = File(...)):
 
 
 @app.get("/track_growth")
-async def track_growth(center: Tuple[float, float] = (0, 0), scan_range: float = 360, day_range: int = 1000):
+async def track_growth(center_lat: float = 0.0, center_lon: float = 0.0, scan_range: float = 360, day_range: int = 1000):
 
     SQL = f"""
     SELECT 
@@ -157,7 +157,7 @@ async def track_growth(center: Tuple[float, float] = (0, 0), scan_range: float =
         JOIN 
             image_processing.raw_entry t2 ON t1.image_uri = t2.image_uri
         WHERE
-            (({center[0]} + t2.latitude)^2 + ({center[1]} + t2.longitude)^2) <= {scan_range}^2
+            (({center_lat} + t2.latitude)^2 + ({center_lon} + t2.longitude)^2) <= {scan_range}^2
             AND t2.date BETWEEN CURRENT_DATE - {day_range} AND CURRENT_DATE 
         GROUP BY 
             t1.plant_id, t2.date, t2.latitude, t2.longitude
