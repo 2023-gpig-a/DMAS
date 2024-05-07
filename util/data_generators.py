@@ -2,6 +2,7 @@ import random
 import uuid
 import math
 from datetime import datetime, timedelta
+from typing import List
 
 from util.data import RawEntry, ProcessedEntry, insert_raw_entry, insert_processed_entry, load_database_config, connect
 
@@ -45,9 +46,8 @@ def generate_entry(conn, date: datetime, plant_id: str, location_center=(54.39, 
     insert_processed_entry(conn, processed_entry)
 
 
-def insert_data(totals_knotweed, totals_rose, conn):
-    days = list(range(0, 360))
-    datetime_days = [datetime.today() - timedelta(days=360) + timedelta(days=date) for date in days]
+def insert_data(totals_knotweed: List[int], totals_rose: List[int], conn) -> None:
+    datetime_days = [datetime.today() - timedelta(days=360) + timedelta(days=date) for date in range(0, 360)]
 
     for date, knotweed_count in zip(datetime_days, totals_knotweed):
         for _ in range(math.floor(knotweed_count)):
@@ -60,7 +60,7 @@ def insert_data(totals_knotweed, totals_rose, conn):
 
 def clear_data(conn):
     with conn.cursor() as cursor:
-        cursor.execute("""truncate image_processing.processed_entry, image_processing.raw_entry""")
+        cursor.execute("truncate image_processing.processed_entry, image_processing.raw_entry")
         conn.commit()
 
 

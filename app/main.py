@@ -118,7 +118,7 @@ async def upload_image(file: UploadFile = File(...)):
 
 
 @app.get("/track_growth")
-async def track_growth(center: Tuple[float, float] = (0, 0), scan_range: float = 360, day_range: int = 1000) :
+async def track_growth(center: Tuple[float, float] = (0, 0), scan_range: float = 360, day_range: int = 1000):
 
     SQL = f"""
     SELECT 
