@@ -2,6 +2,7 @@ from datetime import datetime
 from typing import Tuple
 
 from fastapi import FastAPI, HTTPException, status, File, UploadFile
+from fastapi.middleware.cors import CORSMiddleware
 from PIL import Image
 import io
 import torch
@@ -21,6 +22,19 @@ CHECK_HUMANS = False  # Verify if humans are in the image
 
 # Set up app
 app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:5173",  # frontend dev
+        "http://localhost:8080",  # frontend Docker
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
 app.mount("/ui", StaticFiles(directory="app/static", html=True), name="static")
 
 # Set up PostgreSQL
