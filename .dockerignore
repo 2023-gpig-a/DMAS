@@ -1,0 +1,8 @@
+./.venv
+./venv
+
+./config.ini
+./Dockerfile
+./.git
+
+./models/human_detection/datasets
