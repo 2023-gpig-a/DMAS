@@ -40,14 +40,4 @@ docker run -d --name dmas -p 8080:8080 dmas_image
 
 ## Endpoints:
 
-`/upload_image`
-Post images to this endpoint, if it does not contain humans we create PostgreSQL entries for it, storing the longitude, latitude, file location, and a timestamp.
-We will extract this data from the image metadata.
-We then process these images to identify the plants contained.
-
-Returns: `{status: StatusEnum, message: str}`
-
-`/track_growth`
-When a get request is made to this endpoint, the DMAS will look at all of our processed data, arrange it based on date, and return a key value map of `plant_id` to plant growth data.
-
-Returns: `{plant_id: plant_growth_data}`
+You can view the endpoints and accompanying API doc by running the service, then going to http://hostname:port/docs.
