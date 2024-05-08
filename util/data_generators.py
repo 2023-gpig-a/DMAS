@@ -25,7 +25,7 @@ def growth_map(
     return max(0, out)
 
 
-def generate_entry(conn, date: datetime, plant_id: str, location_center=(54.39, -0.037), range_degrees=0.01) -> None:
+def generate_entry(conn, date: datetime, plant_id: str, location_center=(54.39, -0.937), range_degrees=0.01) -> None:
     # A range of 1 degree is approximately 69 miles from center (nice)
 
     image_uri = uuid.uuid4().hex
