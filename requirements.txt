@@ -9,3 +9,4 @@ pillow~=10.2.0
 requests~=2.31.0
 psycopg2==2.9.9
 python-multipart==0.0.9
+scikit-learn~=1.4.2

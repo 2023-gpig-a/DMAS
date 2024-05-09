@@ -10,7 +10,8 @@ import torch
 from fastapi.staticfiles import StaticFiles
 
 from util import file_handler
-from util.data import RawEntry, ProcessedEntry, load_database_config, connect, insert_raw_entry, insert_processed_entry
+from util.data import (RawEntry, ProcessedEntry, load_database_config, connect, insert_raw_entry,
+                       insert_processed_entry, get_species_data, get_species_daily_growth)
 from util.exceptions import PlantsUndetectedError, GPSUndefinedError
 from util.plant_detector import detect
 from util.data_generators import growth_map, insert_data, clear_data
@@ -134,38 +135,6 @@ async def upload_image(file: UploadFile = File(...)):
 @app.get("/track_growth")
 async def track_growth(center_lat: float = 0.0, center_lon: float = 0.0, scan_range: float = 360, day_range: int = 1000):
 
-    SQL = f"""
-    SELECT 
-        plant_id, 
-        ARRAY_AGG(
-            ARRAY[
-                TO_CHAR(date, 'YYYY-MM-DD'),  
-                latitude::text,
-                longitude::text,
-                count::text
-            ] ORDER BY date
-        ) AS date_counts
-    FROM (
-        SELECT 
-            t1.plant_id, 
-            t2.date, 
-            t2.latitude,
-            t2.longitude,
-            COUNT(*) AS count
-        FROM 
-            image_processing.processed_entry t1
-        JOIN 
-            image_processing.raw_entry t2 ON t1.image_uri = t2.image_uri
-        WHERE
-            (({center_lat} + t2.latitude)^2 + ({center_lon} + t2.longitude)^2) <= {scan_range}^2
-            AND t2.date BETWEEN CURRENT_DATE - {day_range} AND CURRENT_DATE 
-        GROUP BY 
-            t1.plant_id, t2.date, t2.latitude, t2.longitude
-    ) AS subquery
-    GROUP BY 
-        plant_id;
-    """
-
     def format_datum(datum):
         return [PlantInstanceData(
             date=date,
@@ -174,18 +143,39 @@ async def track_growth(center_lat: float = 0.0, center_lon: float = 0.0, scan_ra
             count=int(count)
         ) for date, lat, long, count in datum]
 
-    with conn.cursor() as cursor:
-        cursor.execute(SQL)
-        data = cursor.fetchall()
-        return PlantGrowthDataResponse(
-            plant_growth_data=[PlantIdData(species=s, plant_growth_datum=format_datum(d)) for s, d in data]
-        )
+    species_data = get_species_data(conn, center_lat, center_lon, scan_range, day_range)
+    return PlantGrowthDataResponse(
+        plant_growth_data=[PlantIdData(species=s, plant_growth_datum=format_datum(d)) for s, d in species_data]
+    )
+
+
+# Get the daily growth of each species
+@app.get("/estimate_species_gradients")
+def estimate_species_gradients():
+    return get_species_daily_growth(conn)
+
+
+# Get the pattern of species growth
+@app.get("/estimate_growth_pattern")
+def estimate_growth_pattern():
+    THRESHOLD = 0.05  # Magic number
+    species_gradients = get_species_daily_growth(conn)
+    species_patterns = {}
+
+    for species, gradient in species_gradients.items():
+        if abs(gradient) < THRESHOLD:
+            species_patterns[species] = "CONSTANT"
+        elif gradient > THRESHOLD:
+            species_patterns[species] = "GROWING"
+        else:
+            species_patterns[species] = "DECAYING"
+
+    return species_patterns
 
 
 @app.get("/clear_database")
 def clear_database():
     clear_data(conn)
-
     return Response(status_code=200)
 
 
