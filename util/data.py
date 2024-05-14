@@ -21,7 +21,7 @@ class ProcessedEntry(BaseModel):
 # Database entries end
 
 
-def load_plant_net_api_key(filename=os.getenv('CONFIG_FILE', "../config.ini")):
+def load_plant_net_api_key(filename=os.getenv('CONFIG_FILE', "config.ini")):
     parser = ConfigParser()
     parser.read(filename)
 
@@ -37,7 +37,7 @@ def load_plant_net_api_key(filename=os.getenv('CONFIG_FILE', "../config.ini")):
     return config
 
 
-def load_database_config(filename=os.getenv('CONFIG_FILE', "../config.ini")):
+def load_database_config(filename=os.getenv('CONFIG_FILE', "config.ini")):
     parser = ConfigParser()
     parser.read(filename)
 
