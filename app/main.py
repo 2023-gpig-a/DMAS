@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Tuple
+from typing import TYPE_CHECKING, Tuple
 
 from fastapi import FastAPI, HTTPException, status, File, UploadFile, Response
 from fastapi.middleware.cors import CORSMiddleware
@@ -17,6 +17,9 @@ from util.plant_detector import detect
 from util.data_generators import growth_map, insert_data, clear_data
 from models.human_detection.human_detector import Classifier as HumanDetector
 from app.messages import StatusEnum, MessageResponse, PlantGrowthDataResponse, PlantIdData, PlantInstanceData
+
+if TYPE_CHECKING:
+    import psycopg2
 
 # START OPTIONS
 # TODO this is only temporarily disabled for testing, enable in the demo
@@ -41,7 +44,7 @@ app.mount("/ui", StaticFiles(directory="app/static", html=True), name="static")
 
 # Set up PostgreSQL
 config = load_database_config()
-conn = connect(config)
+conn = connect(config)  # type: psycopg2.extensions.connection
 
 # Get device for ML
 device = "cpu"
@@ -179,6 +182,18 @@ def clear_database():
     return Response(status_code=200)
 
 
+@app.get("/reset_seen")
+def reset_seen():
+    with conn.cursor() as cursor:
+        cursor.execute(
+            '''
+            UPDATE image_processing.raw_entry
+            SET seen = 'f'
+            '''
+        )
+    return Response(status_code=200)
+
+
 @app.get("/fill_database")
 def fill_database(destructive: bool = False, exponential: bool = False):
 
@@ -197,3 +212,16 @@ def fill_database(destructive: bool = False, exponential: bool = False):
     insert_data(totals_knotweed, totals_rose, conn)
 
     return Response(status_code=200)
+
+
+@app.post("/reveal_plants")
+def reveal_plants(lat: float, lng: float, scan_range: float = 0.05):
+    with conn.cursor() as cursor:
+        cursor.execute(
+            '''
+            UPDATE image_processing.raw_entry
+            SET seen = 't'
+            WHERE ((%s - latitude)^2 + (%s - longitude)^2) <= %s^2
+            ''',
+            (lat, lng, scan_range)
+        )

@@ -107,8 +107,9 @@ def get_species_data(conn, center_lat: float = 0.0, center_lon: float = 0.0, sca
         JOIN 
             image_processing.raw_entry t2 ON t1.image_uri = t2.image_uri
         WHERE
-            (({center_lat} + t2.latitude)^2 + ({center_lon} + t2.longitude)^2) <= {scan_range}^2
+            (({center_lat} - t2.latitude)^2 + ({center_lon} - t2.longitude)^2) <= {scan_range}^2
             AND t2.date BETWEEN CURRENT_DATE - {day_range} AND CURRENT_DATE 
+            AND (t2.seen OR t2.date < (NOW() - INTERVAL '2 days'))
         GROUP BY 
             t1.plant_id, t2.date, t2.latitude, t2.longitude
     ) AS subquery

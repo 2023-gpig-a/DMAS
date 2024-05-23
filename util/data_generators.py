@@ -9,7 +9,7 @@ from util.data import RawEntry, ProcessedEntry, insert_raw_entry, insert_process
 
 def growth_map(
         x: float,
-        max_count: int = 20,
+        max_count: int = 30,
         min_count: int = 15,
         offset: int = 0,
         scale_factor: float = 30,
@@ -25,7 +25,7 @@ def growth_map(
     return max(0, out)
 
 
-def generate_entry(conn, date: datetime, plant_id: str, location_center=(54.39, -0.937), range_degrees=0.01) -> None:
+def generate_entry(conn, date: datetime, plant_id: str, location_center=(54.29285, -0.5585194), range_degrees=0.01) -> None:
     # A range of 1 degree is approximately 69 miles from center (nice)
 
     image_uri = uuid.uuid4().hex

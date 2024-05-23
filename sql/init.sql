@@ -12,6 +12,7 @@ CREATE TABLE IF NOT EXISTS image_processing.raw_entry
     latitude real NOT NULL,
     longitude real NOT NULL,
     date timestamp NOT NULL,
+    seen BOOLEAN DEFAULT 'f',
     CONSTRAINT raw_entry_pkey PRIMARY KEY (image_uri)
 );
 
